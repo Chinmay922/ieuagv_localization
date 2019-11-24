@@ -1,61 +1,63 @@
 # ROS IEU AGV Localization
-This project localization system can use for different commercial robots for example turtlebot 3 burger, waffle or turtlebot 2. This localization system different from the others is uwb sensor. Also localization algorithm use lidar, uwb  and odom sensors same time altogether. Furthermore <b>amcl</b> algorithm need the initial pose estimation. In this project this estimation done automatically. 
+In this project we aimed to develop a system that works in ROS environment and can localize itself. These packages tested under turtlebot3, but it can also be used on any other system that has an Ultra-wideband ranging sensor and odometry sensors mounted. It is also possible to initialize the robot and send the initial pose estimation to navigation stack without the need of manually initializing it on the RViz window but keep in mind that in order to the use this feature LiDAR is required. AMCL also needs an initial pose so this feature is very crucial to have a fully autonomous system. We offer a simulation package with synthetic UWB data for now, but it can be adjusted so that it will be possible to the use it on real life robot with real UWB sensors.
+
 
 ![](https://raw.githubusercontent.com/ieuagv/ros_ieuagv_localization/master/docs/map_matcher.gif)
 
 
 ## Setup 
-Firstly your robot must be supported with uwb sensors to use this project. You can try with this similation with this project  After the install package ros_pozyx_simulation (in simulation) or ros_ieuagv_pozyx (in real robot).</br>
+First you will need to utilize at least 4 UWB sensors one is mounted on the robot and rest should be placed in a way that it will cover the area of interest where you want to localize your robot. Simulation is possible with the shared scripts. However, this package doesn’t support direct use so slight adjustments on the pozyx scripts are required. So install the package ros_pozyx_simulation and run it before
 
 - [pozyx uwb similation](https://github.com/ieuagv/ros_pozyx_simulation)</br>
 - [pozyx uwb real (coming soon)]()
 
-```
+
 rosrun pozyx_simulation uwb_simulation.py
 rostopic echo /uwb_data_topic 
-```
-After the get uwb_data_topic you can use this project </br>
+
+After you confirm that uwb_data_topic is available in ROS you can use this project </br>
 
 
 ## How to Run Localization 
-This project include 2 different localization algorithm. </br>
-- Kalman Filter = ultra wide band + odom 
-- Square Range Least Square = ultra wide band
+This project includes 2 different localization algorithms and they use different sensory information. </br>
+- Kalman Filter = ultra wide band + odometry 
+- Source Localization = ultra wide band
 
 ### Kalman Filter  
-```
-rosrun ieuagv_localization kalman_filter_localization.py
-```
 
-### Square Range Least Square 
-```
+rosrun ieuagv_localization kalman_filter_localization.py
+
+
+### Source Localization 
+
 rosrun ieuagv_localization sqrrange_leastsqr_localization.py 
-```
+
 
 ## How to Run Initial Pose Estimation 
-There are 2 different initial pose estimation algorithm. First one use lidar, map and uwb sensors and second one is use only uwb sensor however for calculate to direction of robot, it must move 20 cm.
+There are 2 different initial pose estimation algorithms in this repository. First one uses LiDAR measurement, preconstructed map and UWB range measurements. Second one only uses UWB sensor and the vehicle must move 20cm forward to figure out the direction it is facing.
 
-### (Lidar + Map + UWB Sensor) Initializ 
-This algorithm use uwb sensors and odom so that **localization_data_topic** and **odom** topics must to be up and running.</br>
-```
+### (Lidar + Map + UWB Sensor) Initialization 
+This algorithm uses uwb sensors and odometry so localization_data_topic and odom topics must to be up and running.</br>
+
 roslaunch ieuagv_localization lidar_uwb_initial_pose.launch 
-```
 
-### (UWB Sensor) Initializ 
-This algorithm use only uwb sensors so that **localization_data_topic** topic must to be up and running.
-```
+
+### (UWB Sensor) Initialization
+This algorithm uses only uwb sensors so localization_data_topic topic must to be up and running.
+
 roslaunch ieuagv_localization uwb_initial_pose.launch 
-```
+
+
+
 
 ## How to Use Localization Algorithm
-Kalman filter and square range least square localization nodes are use same topic thus you have to select one of them. This topic type is Pose. In python you can get with a subscriber. 
-```
+Kalman filter and source localization use same topic thus you must select the one that you want to run because only one of them can run. The topic that mentioned is Pose. In python you can use this topic with writing a subscriber like below. 
+
 from geometry_msgs.msg import Pose
 
 rospy.Subscriber("localization_data_topic", Pose, subscribe_data)
 
 def subscribe_data(self,Pose):
   robot_realtime_pose= Pose
-```
-![](https://raw.githubusercontent.com/ieuagv/ros_ieuagv_localization/master/docs/localization_gui.png)
 
+![](https://raw.githubusercontent.com/ieuagv/ros_ieuagv_localization/master/docs/localization_gui.png)
